@@ -29,6 +29,7 @@ export default async function handler(req, res) {
     desiredOutcome: String(body.desiredOutcome || "").slice(0, 200),
     obstacles: Array.isArray(body.obstacles) ? body.obstacles.slice(0, 10) : [],
     obstacleOther: String(body.obstacleOther || "").slice(0, 250),
+    serviceTiming: String(body.serviceTiming || "").slice(0, 50),
     answers: body.answers,
     totalPoints: Number(body.totalPoints),
     percentage: Number(body.percentage),
@@ -47,6 +48,22 @@ export default async function handler(req, res) {
     addRandomSuffix: true,
     contentType: "application/json"
   });
+
+  // Slack notification — best-effort; never blocks the lead from being stored.
+  if (process.env.SLACK_WEBHOOK_URL) {
+    try {
+      await fetch(process.env.SLACK_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: "New Workspace Valet lead received\n" +
+                "Email: " + record.email + "\n" +
+                "Readiness tier: " + record.resultProfile + "\n" +
+                "Timing: " + (record.serviceTiming || "Not answered")
+        })
+      });
+    } catch (e) { /* lead is already stored; notification failure is non-fatal */ }
+  }
 
   return res.status(200).json({ ok: true });
 }

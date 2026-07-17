@@ -1,38 +1,17 @@
-// A-Player Workspace Assessment — quiz engine
-// 10 scored questions (0–3 pts) + result gate + 3 fit questions.
+// A-Player Workspace Assessment — quiz engine (spec v2)
+// 8 scored questions (0–3 pts, max 24) + result gate + 4 fit questions.
 // Answers persist in sessionStorage; submission posts to /api/assessment.
 
+const TOTAL_QUESTIONS = 14; // 8 scored + gate (2) + role + outcome + obstacles + timing
+const MAX_POINTS = 24;
+
 const DIMS = {
-  presentation: { label: "Presentation and Readiness", max: 9 },
+  presentation: { label: "Presentation and Readiness", max: 3 },
   careSystem:   { label: "Care System", max: 12 },
   stewardship:  { label: "Equipment Stewardship and Trust", max: 9 }
 };
 
 const SCORED = [
-  { dim: "presentation",
-    q: "How closely does the condition of your employee workstations match the standard of your lobby, conference rooms, and shared spaces?",
-    opts: [
-      ["Every workstation receives the same level of attention as our client-facing spaces.", 3],
-      ["Most workstations match, but the condition varies by employee or area.", 2],
-      ["Our shared spaces present better than many individual workstations.", 1],
-      ["We have not compared them closely.", 0]
-    ]},
-  { dim: "presentation",
-    q: "If a client, candidate, or new employee sat at any available workstation today, how confident would you feel?",
-    opts: [
-      ["Very confident. Any workstation would be ready.", 3],
-      ["Mostly confident, but I would choose a specific area for them.", 2],
-      ["It would depend on which workstation they received.", 1],
-      ["We would need to prepare a workstation first.", 0]
-    ]},
-  { dim: "presentation",
-    q: "What happens before a client visit, recruiting day, or new-hire start date?",
-    opts: [
-      ["A checklist covers the workstations and technology, and someone confirms completion.", 3],
-      ["The team performs a visual office reset, including the most visible workstations.", 2],
-      ["We focus on the lobby and conference rooms more than employee workstations.", 1],
-      ["We do not have a standard preparation process.", 0]
-    ]},
   { dim: "careSystem",
     q: "How often do all laptops, screens, keyboards, docks, phones, and workstation surfaces receive coordinated professional care?",
     opts: [
@@ -41,8 +20,16 @@ const SCORED = [
       ["Individual employees or the cleaning team handle parts of it when needed.", 1],
       ["There is no defined cadence, or I do not know.", 0]
     ]},
+  { dim: "presentation",
+    q: "Honestly speaking, do you think each employee\u2019s workstation matches the standard of your lobby, conference rooms, and shared spaces?",
+    opts: [
+      ["Every workstation receives the same level of attention as our client-facing spaces.", 3],
+      ["Most workstations match, but the condition varies by employee or area.", 2],
+      ["Our shared spaces present better than many individual workstations.", 1],
+      ["We have not compared them closely.", 0]
+    ]},
   { dim: "careSystem",
-    q: "How is responsibility for workstation care handled today?",
+    q: "Who is responsible for workstation care and detailing?",
     opts: [
       ["A named person or vendor follows a clear protocol and confirms completion.", 3],
       ["An office or operations leader coordinates it when needed.", 2],
@@ -83,7 +70,7 @@ const SCORED = [
       ["They receive little or no attention.", 0]
     ]},
   { dim: "stewardship",
-    q: "When dust, smudges, crumbs, or cable disorder become visible, what usually happens?",
+    q: "What usually happens when dust, smudges, crumbs, or cable disorder become visible?",
     opts: [
       ["Our care schedule catches most issues before they become noticeable.", 3],
       ["Someone handles the issue within a few days.", 2],
@@ -122,15 +109,23 @@ const OBSTACLE_OPTS = [
   "Other"
 ];
 
+const TIMING_OPTS = [
+  "ASAP",
+  "1–3 months",
+  "3–6 months",
+  "Just exploring options"
+];
+
+// Bands keep the original cut lines (80% / 50%) rescaled to 24 points.
 const PROFILES = [
-  { min: 24, name: "Performance-Ready Office",
+  { min: 20, name: "Performance-Ready Office",
     meaning: "Your company already treats its work environment as part of performance, employee experience, and presentation. Workstation care is more consistent than it is in most offices.",
     steps: [
       "Protect the current standard with a documented recurring cadence.",
       "Confirm that shared desks, conference-room technology, and new-hire workstations follow the same process.",
       "Use a professional baseline Detail Day to document the condition of every workstation and identify visible exceptions."
     ]},
-  { min: 15, name: "High-Standard Office Without a System",
+  { min: 12, name: "High-Standard Office Without a System",
     meaning: "Your company cares about its environment and expects high-quality work, but workstation care depends on individuals, occasional resets, or informal coordination.",
     steps: [
       "Establish one visible standard across every workstation.",
@@ -162,12 +157,12 @@ const OUTCOME_RECO = {
 };
 
 // ── State ─────────────────────────────────────────────────
-const STORE_KEY = "wv-assessment";
-let state = { step: "intro", scored: Array(10).fill(null), firstName: "", email: "",
-              role: null, outcome: null, obstacles: [], obstacleOther: "" };
+const STORE_KEY = "wv-assessment-v2";
+let state = { step: "intro", scored: Array(8).fill(null), firstName: "", email: "",
+              role: null, outcome: null, obstacles: [], obstacleOther: "", timing: null };
 try {
   const saved = JSON.parse(sessionStorage.getItem(STORE_KEY));
-  if (saved && Array.isArray(saved.scored)) state = saved;
+  if (saved && Array.isArray(saved.scored) && saved.scored.length === 8) state = saved;
 } catch (e) { /* fresh start */ }
 
 // Capture UTMs (from this URL or ones the homepage saved)
@@ -194,59 +189,79 @@ function show(card) {
 
 function setProgress(n) {
   el("quizProgress").hidden = false;
-  el("progressFill").style.width = Math.round(n / 15 * 100) + "%";
-  el("progressLabel").textContent = "Question " + n + " of 15";
+  el("progressFill").style.width = Math.round(n / TOTAL_QUESTIONS * 100) + "%";
+  el("progressLabel").textContent = "Question " + n + " of " + TOTAL_QUESTIONS;
 }
 
 // ── Question rendering ────────────────────────────────────
-// Steps: q1..q10 scored, gate (11+12), q13 role, q14 outcome, q15 obstacles
+// Steps: q1..q8 scored, gate (9+10), q11 role, q12 outcome,
+//        q13 obstacles (multi), q14 service timing
 function render() {
   save();
   const s = state.step;
   if (s === "intro") { el("quizProgress").hidden = true; return show("intro"); }
-  if (s === "gate") { setProgress(11); return show("gate"); }
+  if (s === "gate") { setProgress(9); return show("gate"); }
   if (s === "result") { el("quizProgress").hidden = true; return renderResult(); }
 
-  const idx = parseInt(s.slice(1), 10); // q1..q15
+  const idx = parseInt(s.slice(1), 10); // q1..q14
   show("question");
   el("qNote").hidden = true;
   el("nextBtn").hidden = true;
   el("backBtn").style.visibility = idx === 1 ? "hidden" : "visible";
 
-  if (idx <= 10) {
+  if (idx <= 8) {
     setProgress(idx);
     const q = SCORED[idx - 1];
-    el("qNum").textContent = "Question " + idx + " of 15";
+    el("qNum").textContent = "Question " + idx + " of " + TOTAL_QUESTIONS;
     el("qText").textContent = q.q;
     if (q.note) { el("qNote").textContent = q.note; el("qNote").hidden = false; }
     renderOptions(q.opts.map(o => o[0]), state.scored[idx - 1], choice => {
       state.scored[idx - 1] = choice;
-      state.step = idx === 10 ? "gate" : "q" + (idx + 1);
+      state.step = idx === 8 ? "gate" : "q" + (idx + 1);
+      if (idx === 8) track("assessment_scored_questions_completed");
+      render();
+    });
+  } else if (idx === 11) {
+    setProgress(11);
+    el("qNum").textContent = "Question 11 of " + TOTAL_QUESTIONS;
+    el("qText").textContent = "Which best describes your role?";
+    renderOptions(ROLE_OPTS, state.role === null ? null : ROLE_OPTS.indexOf(state.role), choice => {
+      state.role = ROLE_OPTS[choice];
+      state.step = "q12";
+      render();
+    });
+  } else if (idx === 12) {
+    setProgress(12);
+    el("qNum").textContent = "Question 12 of " + TOTAL_QUESTIONS;
+    el("qText").textContent = "What would make your office life easier when it comes to workspace detailing?";
+    renderOptions(OUTCOME_OPTS, state.outcome === null ? null : OUTCOME_OPTS.indexOf(state.outcome), choice => {
+      state.outcome = OUTCOME_OPTS[choice];
+      state.step = "q13";
       render();
     });
   } else if (idx === 13) {
     setProgress(13);
-    el("qNum").textContent = "Question 13 of 15";
-    el("qText").textContent = "Which best describes your role?";
-    renderOptions(ROLE_OPTS, state.role === null ? null : ROLE_OPTS.indexOf(state.role), choice => {
-      state.role = ROLE_OPTS[choice];
-      state.step = "q14";
-      render();
-    });
-  } else if (idx === 14) {
-    setProgress(14);
-    el("qNum").textContent = "Question 14 of 15";
-    el("qText").textContent = "What would make the biggest difference in your workplace right now?";
-    renderOptions(OUTCOME_OPTS, state.outcome === null ? null : OUTCOME_OPTS.indexOf(state.outcome), choice => {
-      state.outcome = OUTCOME_OPTS[choice];
-      state.step = "q15";
-      render();
-    });
-  } else if (idx === 15) {
-    setProgress(15);
-    el("qNum").textContent = "Question 15 of 15 · Select all that apply";
+    el("qNum").textContent = "Question 13 of " + TOTAL_QUESTIONS + " · Select all that apply";
     el("qText").textContent = "What has made consistent workstation care difficult?";
     renderMulti();
+  } else if (idx === 14) {
+    setProgress(14);
+    el("qNum").textContent = "Question 14 of " + TOTAL_QUESTIONS;
+    el("qText").textContent = "How soon might you need valet service?";
+    renderOptions(TIMING_OPTS, state.timing === null ? null : TIMING_OPTS.indexOf(state.timing), choice => {
+      state.timing = TIMING_OPTS[choice];
+      save();
+      const next = el("nextBtn");
+      next.innerHTML = 'Show My Results <span class="arrow">→</span>';
+      next.onclick = finish;
+      next.hidden = false;
+    });
+    if (state.timing !== null) {
+      const next = el("nextBtn");
+      next.innerHTML = 'Show My Results <span class="arrow">→</span>';
+      next.onclick = finish;
+      next.hidden = false;
+    }
   }
 }
 
@@ -296,18 +311,18 @@ function renderMulti() {
   });
   const next = el("nextBtn");
   next.hidden = state.obstacles.length === 0;
-  next.innerHTML = 'Show My Results <span class="arrow">→</span>';
-  next.onclick = finish;
+  next.innerHTML = 'Continue <span class="arrow">→</span>';
+  next.onclick = () => { state.step = "q14"; render(); };
 }
 
 // ── Back navigation ───────────────────────────────────────
 el("backBtn").addEventListener("click", () => {
   const idx = parseInt(state.step.slice(1), 10);
-  if (idx === 13) state.step = "gate";
+  if (idx === 11) state.step = "gate";
   else if (idx > 1) state.step = "q" + (idx - 1);
   render();
 });
-el("gateBack").addEventListener("click", () => { state.step = "q10"; render(); });
+el("gateBack").addEventListener("click", () => { state.step = "q8"; render(); });
 
 // ── Start ─────────────────────────────────────────────────
 el("startBtn").addEventListener("click", () => {
@@ -327,7 +342,7 @@ el("gateForm").addEventListener("submit", e => {
   state.firstName = name;
   state.email = email;
   track("assessment_lead_captured");
-  state.step = "q13";
+  state.step = "q11";
   render();
 });
 
@@ -346,7 +361,7 @@ function computeScores() {
     const ratio = dims[key] / DIMS[key].max;
     if (ratio < lowestRatio) { lowestRatio = ratio; lowest = key; }
   }
-  return { total, pct: Math.round(total / 30 * 100), dims, lowest };
+  return { total, pct: Math.round(total / MAX_POINTS * 100), dims, lowest };
 }
 
 // ── Finish + submit ───────────────────────────────────────
@@ -368,6 +383,7 @@ function finish() {
       desiredOutcome: state.outcome,
       obstacles: state.obstacles,
       obstacleOther: state.obstacleOther,
+      serviceTiming: state.timing,
       answers: state.scored.map((c, i) => ({ q: i + 1, choice: c, points: c === null ? 0 : SCORED[i].opts[c][1] })),
       totalPoints: total,
       percentage: pct,
@@ -388,7 +404,7 @@ function renderResult() {
   const profile = PROFILES.find(p => total >= p.min);
 
   el("scorePct").textContent = pct;
-  el("scorePoints").textContent = total + " of 30 points";
+  el("scorePoints").textContent = total + " of " + MAX_POINTS + " points";
   el("profileName").textContent = profile.name;
   el("profileMeaning").textContent = profile.meaning;
 

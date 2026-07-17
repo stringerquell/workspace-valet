@@ -5,8 +5,8 @@
 import { list } from "@vercel/blob";
 
 const CSV_COLUMNS = [
-  "timestamp", "firstName", "email", "role", "desiredOutcome", "obstacles",
-  "obstacleOther", "totalPoints", "percentage", "resultProfile",
+  "timestamp", "firstName", "email", "role", "desiredOutcome", "serviceTiming",
+  "obstacles", "obstacleOther", "totalPoints", "percentage", "resultProfile",
   "lowestDimension", "presentation", "careSystem", "stewardship",
   "utm_source", "utm_medium", "utm_campaign"
 ];
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
   if (req.query.format === "csv") {
     const rows = leads.map(l => [
-      l.timestamp, l.firstName, l.email, l.role, l.desiredOutcome,
+      l.timestamp, l.firstName, l.email, l.role, l.desiredOutcome, l.serviceTiming,
       (l.obstacles || []).join("; "), l.obstacleOther, l.totalPoints,
       l.percentage, l.resultProfile, l.lowestDimension,
       l.dimensionScores?.presentation, l.dimensionScores?.careSystem,
