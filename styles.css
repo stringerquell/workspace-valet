@@ -270,3 +270,7 @@ p:last-child{margin-bottom:0}
   .quiz-card{padding:32px 22px}
   .hero-actions .btn{width:100%;justify-content:center}
 }
+
+/* ── Founding-offer savings display ─────────────────────── */
+.calc-result s{color:var(--muted);font-weight:400;font-size:.85em;margin-left:8px;text-decoration-thickness:1px}
+.calc-save{font-size:14px;font-weight:600;color:var(--graphite);margin-top:6px}

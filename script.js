@@ -7,27 +7,30 @@ const STRIPE_DEPOSIT_URL = "https://book.stripe.com/14A28r5QF44695HgMf5J60R";
 const BOOKING_EMAIL = "workspacevalet@greenbookdigital.co";
 
 // ── Pricing ───────────────────────────────────────────────
-const BASE_PRICE = 375;      // up to 20 workstations
-const BASE_INCLUDED = 20;
-const EXTRA_PER_SEAT = 25;
+// Founding: $300 covers the first 10, +$20 each for 11–20, capped at 20.
+// Standard: $400 covers the first 10, +$35 each for 11–20.
+const FOUNDING_BASE = 300, STANDARD_BASE = 400;
+const BASE_INCLUDED = 10, CAP = 20;
+const FOUNDING_EXTRA = 20, STANDARD_EXTRA = 35;
 
 const wsInput = document.getElementById("wsCount");
 const calcResult = document.getElementById("calcResult");
+const calcSave = document.getElementById("calcSave");
 const depositBtn = document.getElementById("depositBtn");
 
-function price(count) {
-  const extra = Math.max(0, count - BASE_INCLUDED);
-  return BASE_PRICE + extra * EXTRA_PER_SEAT;
-}
+function founding(count) { return FOUNDING_BASE + Math.max(0, count - BASE_INCLUDED) * FOUNDING_EXTRA; }
+function standard(count) { return STANDARD_BASE + Math.max(0, count - BASE_INCLUDED) * STANDARD_EXTRA; }
 
 function updateCalc() {
-  const count = Math.min(200, Math.max(1, parseInt(wsInput.value, 10) || BASE_INCLUDED));
-  const total = price(count);
+  const raw = parseInt(wsInput.value, 10) || BASE_INCLUDED;
+  const count = Math.min(CAP, Math.max(1, raw));
+  const total = founding(count);
+  const full = standard(count);
   calcResult.innerHTML =
-    "Your Detail Day: <strong>$" + total + "</strong>" +
-    (count > BASE_INCLUDED
-      ? " <span style='color:var(--muted)'>($375 + " + (count - BASE_INCLUDED) + " × $25)</span>"
-      : "");
+    "Your Detail Day: <strong>$" + total + "</strong> <s>$" + full + "</s>";
+  calcSave.textContent = raw > CAP
+    ? "The founding offer covers up to 20 workstations — email us about a larger office."
+    : "You save $" + (full - total) + " off the standard rate.";
   if (STRIPE_DEPOSIT_URL) {
     depositBtn.href = STRIPE_DEPOSIT_URL;
     depositBtn.target = "_blank";
