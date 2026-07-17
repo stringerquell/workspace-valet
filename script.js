@@ -47,6 +47,17 @@ if (wsInput) {
   updateCalc();
 }
 
+// ── Save UTM params for the assessment ───────────────────
+try {
+  const p = new URLSearchParams(location.search);
+  const utm = JSON.parse(sessionStorage.getItem("wv-utm") || "{}");
+  let found = false;
+  ["utm_source","utm_medium","utm_campaign","utm_content","utm_term"].forEach(k => {
+    if (p.get(k)) { utm[k] = p.get(k); found = true; }
+  });
+  if (found) sessionStorage.setItem("wv-utm", JSON.stringify(utm));
+} catch (e) { /* ignore */ }
+
 // ── Nav scroll state ─────────────────────────────────────
 const nav = document.getElementById("nav");
 window.addEventListener("scroll", () => {

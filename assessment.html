@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A-Player Workspace Assessment — Workspace Valet</title>
+<meta name="description" content="Is your workspace ready for A-players? Answer 15 questions and get your Workspace Readiness Score in under three minutes.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230A0A0A'/%3E%3Ctext x='50' y='68' font-family='Arial,sans-serif' font-size='52' font-weight='700' fill='%23fff' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="assessment-body">
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="wordmark" href="/">Workspace&nbsp;Valet</a>
+    <a class="btn btn-primary nav-cta" href="/#offer">Reserve a Detail Day</a>
+  </div>
+</header>
+
+<main class="quiz-shell">
+
+  <!-- Progress -->
+  <div class="quiz-progress" id="quizProgress" hidden>
+    <div class="quiz-progress-bar"><span id="progressFill"></span></div>
+    <p class="quiz-progress-label" id="progressLabel">Question 1 of 15</p>
+  </div>
+
+  <!-- Intro -->
+  <section class="quiz-card" id="introCard">
+    <p class="eyebrow">Free 3-Minute Assessment</p>
+    <h1>Is Your Workspace Ready for A-Players?</h1>
+    <p class="sub">Answer 15 questions to see how well your office supports the standard you expect from your team.</p>
+    <ul class="quiz-benefits">
+      <li>Get your Workspace Readiness Score</li>
+      <li>See which part of your workplace standard needs attention</li>
+      <li>Leave with a clear next step</li>
+    </ul>
+    <button class="btn btn-primary" id="startBtn">Take the Free Assessment <span class="arrow">→</span></button>
+    <p class="microcopy">Get your score immediately. No sales call required.</p>
+  </section>
+
+  <!-- Question screen -->
+  <section class="quiz-card" id="questionCard" hidden>
+    <p class="quiz-qnum" id="qNum"></p>
+    <h2 class="quiz-question" id="qText"></h2>
+    <p class="quiz-note" id="qNote" hidden></p>
+    <div class="quiz-options" id="qOptions"></div>
+    <div class="quiz-nav">
+      <button class="quiz-back" id="backBtn" type="button">← Back</button>
+      <button class="btn btn-primary" id="nextBtn" type="button" hidden>Continue <span class="arrow">→</span></button>
+    </div>
+  </section>
+
+  <!-- Result gate (Q11 + Q12) -->
+  <section class="quiz-card" id="gateCard" hidden>
+    <p class="eyebrow">Almost There</p>
+    <h2>Your Workspace Readiness Score is ready.</h2>
+    <p class="sub">Tell us where to send your result and next steps.</p>
+    <form id="gateForm" novalidate>
+      <div class="quiz-field">
+        <label for="firstName">First name</label>
+        <input type="text" id="firstName" name="firstName" autocomplete="given-name" required>
+      </div>
+      <div class="quiz-field">
+        <label for="email">Work email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required>
+      </div>
+      <p class="quiz-error" id="gateError" hidden>Please enter your first name and a valid email address.</p>
+      <p class="microcopy">By continuing, you agree to receive your result and occasional Workspace Valet emails. You can unsubscribe at any time.</p>
+      <div class="quiz-nav">
+        <button class="quiz-back" id="gateBack" type="button">← Back</button>
+        <button class="btn btn-primary" type="submit">Continue to My Results <span class="arrow">→</span></button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Result -->
+  <section class="quiz-card quiz-result" id="resultCard" hidden>
+    <p class="eyebrow">Your Workspace Readiness Score</p>
+    <p class="quiz-score"><span id="scorePct"></span><span class="quiz-score-pct">%</span></p>
+    <p class="quiz-score-points" id="scorePoints"></p>
+    <h2 id="profileName"></h2>
+    <p class="sub" id="profileMeaning"></p>
+
+    <div class="quiz-dims" id="dimRows"></div>
+
+    <div class="quiz-reco">
+      <p class="eyebrow" id="priorityLabel">First Priority</p>
+      <p class="strong" id="dimReco"></p>
+      <p id="outcomeReco"></p>
+    </div>
+
+    <div class="quiz-steps">
+      <p class="eyebrow">Recommended Next Steps</p>
+      <ol id="stepList"></ol>
+    </div>
+
+    <div class="quiz-result-ctas">
+      <a class="btn btn-primary btn-wide" id="stripeCta" href="https://book.stripe.com/14A28r5QF44695HgMf5J60R" target="_blank" rel="noopener">Reserve a Founding Detail Day</a>
+      <p class="microcopy center">4 founding slots. $375 up to 20 workstations. $100 refundable deposit.</p>
+      <button class="quiz-secondary" id="protocolCta" type="button">Download the Office Manager Protocol</button>
+      <p class="microcopy center" id="protocolNote" hidden>The Protocol is being finalized for our founding launch — we'll email it to you as soon as it's ready.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <p class="wordmark">Workspace Valet</p>
+    <p>Baltimore · Serving the DMV by route availability</p>
+    <p><a href="mailto:workspacevalet@greenbookdigital.co">workspacevalet@greenbookdigital.co</a></p>
+    <p class="footer-fine">Privacy · Terms · Service protocol</p>
+  </div>
+</footer>
+
+<script src="assessment.js"></script>
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
