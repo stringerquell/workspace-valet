@@ -4,7 +4,7 @@
 // Paste the Stripe payment link here once the Stripe account is connected.
 // While empty, the deposit button falls back to a pre-filled email request.
 const STRIPE_DEPOSIT_URL = "https://book.stripe.com/14A28r5QF44695HgMf5J60R";
-const BOOKING_EMAIL = "workspacevalet@greenbookdigital.co";
+const BOOKING_EMAIL = "readytoserve@workspacevalet.com";
 
 // ── Pricing ───────────────────────────────────────────────
 // Founding: $300 covers the first 10, +$20 each for 11–20, capped at 20.
