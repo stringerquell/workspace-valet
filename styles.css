@@ -274,3 +274,7 @@ p:last-child{margin-bottom:0}
 /* ── Founding-offer savings display ─────────────────────── */
 .calc-result s{color:var(--muted);font-weight:400;font-size:.85em;margin-left:8px;text-decoration-thickness:1px}
 .calc-save{font-size:14px;font-weight:600;color:var(--graphite);margin-top:6px}
+
+/* Nav logo */
+.wordmark .logo{height:34px;width:auto;display:block}
+.center{text-align:center}
